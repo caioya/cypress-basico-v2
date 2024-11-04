@@ -1,5 +1,8 @@
 describe('Central de Atendimento ao Cliente TAT', function() {
+    const THREE_SECONDS_MS = 3000
+
     beforeEach(function () {
+        cy.clock()
         cy.visit('./src/index.html')
     })
 
@@ -15,6 +18,8 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('#open-text-area').type(longText, {delay:0})
         cy.contains('button','Enviar').click()
         cy.get('.success').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.success').should('not.be.visible')
     })
 
     it('verify the display error message when the form is submitted with an invalid format', function (){
@@ -24,6 +29,8 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('#open-text-area').type('Testing')
         cy.contains('button','Enviar').click()
         cy.get('.error').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.error').should('not.be.visible')
     })
 
     it('verify the telephone field is still empty when populated with a non-numeric value', function (){
@@ -40,6 +47,8 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('#open-text-area').type('Testing')
         cy.contains('button','Enviar').click()
         cy.get('.error').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.error').should('not.be.visible')
     })
 
     it('verify filling and clearing fields', function (){
@@ -69,15 +78,19 @@ describe('Central de Atendimento ao Cliente TAT', function() {
     it('verify the display error message when the form is submitted with all mandatory fields empty', function (){
         cy.contains('button','Enviar').click()
         cy.get('.error').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.error').should('not.be.visible')
     })
 
     it('verify and submit a successful form using Custom Commands', function (){
         cy.fillMandatoryFieldsAndSubmit()
         cy.get('.success').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.error').should('not.be.visible')
     })
 
     it('verify and submit a successful form using Page Objects', function (){
-        const formPage = require('../pageObjects/form')
+        const formPage = require('../../pageObjects/form')
         formPage.fillAndSubmitForm()
         cy.get('.success').should('be.visible')
     })
@@ -89,6 +102,8 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('#open-text-area').type('Testing')
         cy.contains('button','Enviar').click()
         cy.get('.success').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.error').should('not.be.visible')
     })
 
     it('selecting a random option from a dropdown without a verification', function (){
@@ -119,6 +134,8 @@ describe('Central de Atendimento ao Cliente TAT', function() {
             .should('have.value','feedback')
         cy.contains('button','Enviar').click()
         cy.get('.success').should('be.visible')
+        cy.tick(THREE_SECONDS_MS)
+        cy.get('.error').should('not.be.visible')
     })
 
     it('verify each radio checked', function (){
@@ -183,6 +200,52 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.contains('Talking About Testing').should('be.visible')
     })
 
+    it('display and hide success and errors messages', function (){
+        cy.get('.success')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Mensagem enviada com sucesso.')
+            .invoke('hide')
+            .should('not.be.visible')
+        cy.get('.error')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Valide os campos obrigatórios!')
+            .invoke('hide')
+            .should('not.be.visible')
+    })
 
+    it('fill text using invoke', function () {
+        const longText = Cypress._.repeat('12345 ',100)
+        cy.get('#open-text-area')
+            .invoke('val', longText)
+            .should('have.value', longText)
+
+    })
+
+    it('request a GET endpoint', function () {
+        cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+            .should (function(response) {
+                const { status, statusText, body} = response
+                expect(status).to.equal(200)
+                expect(statusText).to.equal('OK')
+                expect(body).to.include('CAC TAT')
+         })
+    })
+
+    it('challenge: show cat', function (){
+        cy.get('#cat')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+    })
+
+    it.only('challenge: show cat using invoke', function (){
+        cy.get('#cat')
+            .invoke('css', 'display', 'block')
+            .should('be.visible')
+    })
 })
 
